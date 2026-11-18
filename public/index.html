@@ -123,13 +123,14 @@
         }
         #error-msg {
             display: none;
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px;
+            background: #fff3cd;
+            color: #856404;
+            padding: 14px;
             border-radius: 8px;
             margin-top: 20px;
             font-size: 14px;
-            border-left: 4px solid #c62828;
+            border-left: 4px solid #ffc107;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -252,7 +253,16 @@
 
             } catch (err) {
                 console.error(err);
-                errorMsg.textContent = `Error: ${err.message}`;
+                let message = err.message;
+                
+                // Detectar si es error de servidores saturados (503 / high demand)
+                if (message.includes('503') || message.includes('high demand') || message.includes('Service Unavailable')) {
+                    message = "⚠️ <strong>Servidores de Google ocupados (Alta demanda).</strong> Los servidores están recibiendo muchas peticiones en este momento. Por favor, esperá 2 o 3 minutos y volvé a hacer clic en 'Transcribir y Descargar PDF'.";
+                } else {
+                    message = `<strong>Error:</strong> ${message}`;
+                }
+
+                errorMsg.innerHTML = message;
                 errorMsg.style.display = 'block';
             } finally {
                 submitBtn.disabled = false;
