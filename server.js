@@ -1,16 +1,30 @@
 import express from "express";
+import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GoogleAIFileManager } from "@google/generative-ai/server";
 import formidable from "formidable";
 import fs from "fs";
+import ffmpeg from "fluent-ffmpeg";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
+
+// Función para comprimir audios pesados por debajo del límite de OpenAI (25 MB)
+function compressAudio(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .toFormat("mp3")
+      .audioChannels(1) // Canal monofónico para reducir tamaño
+      .audioBitrate("32k") // Bitrate optimizado para voz
+      .on("end", () => resolve(outputPath))
+      .on("error", (err) => reject(err))
+      .save(outputPath);
+  });
+}
 
 app.post("/api/transcribe", async (req, res) => {
   const uploadDir = "/tmp";
@@ -26,15 +40,16 @@ app.post("/api/transcribe", async (req, res) => {
 
   form.parse(req, async (err, fields, files) => {
     let filePath = null;
+    let compressedPath = null;
+
     try {
       if (err) {
-        console.error("Error al recibir el archivo:", err);
         return res.status(400).json({ error: "Error al recibir el archivo de audio." });
       }
 
       const possibleKeys = Object.keys(files);
       if (possibleKeys.length === 0) {
-        return res.status(400).json({ error: "No se encontró ningún archivo de audio en la petición." });
+        return res.status(400).json({ error: "No se encontró ningún archivo de audio." });
       }
 
       const audioFileArray = files[possibleKeys[0]];
@@ -45,74 +60,58 @@ app.post("/api/transcribe", async (req, res) => {
       }
 
       filePath = audioFile.filepath;
-      const originalFilename = audioFile.originalFilename || "audio.mp3";
+      compressedPath = `${uploadDir}/compressed_${Date.now()}.mp3`;
 
-      // Subida al Administrador de Archivos de Google AI Studio
-      const uploadResponse = await fileManager.uploadFile(filePath, {
-        mimeType: "audio/mp3",
-        displayName: originalFilename,
+      // 1. Comprimir audio para cumplir con el límite de OpenAI (25 MB)
+      console.log("Comprimiendo audio...");
+      await compressAudio(filePath, compressedPath);
+
+      // 2. Transcribir con OpenAI Whisper (Estable, sin errores 503)
+      console.log("Enviando a OpenAI Whisper...");
+      const transcriptionResponse = await openai.audio.transcriptions.create({
+        file: fs.createReadStream(compressedPath),
+        model: "whisper-1",
+        response_format: "text"
       });
 
-      let fileState = await fileManager.getFile(uploadResponse.file.name);
-      while (fileState.state === "PROCESSING") {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        fileState = await fileManager.getFile(uploadResponse.file.name);
-      }
+      const rawText = transcriptionResponse;
 
-      if (fileState.state === "FAILED") {
-        throw new Error("El procesamiento del audio falló en los servidores de Google.");
-      }
-
+      // 3. Dar formato estricto con Gemini (Procesamiento de texto puro, sin fallos)
+      console.log("Dando formato ontológico con Gemini...");
+      const coachName = fields.coach ? (Array.isArray(fields.coach) ? fields.coach[0] : fields.coach) : "COACH";
+      
       const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
-
       const prompt = `
-        Actúa como un transcriptor profesional y analista de sesiones de coaching ejecutivo.
-        Analiza este archivo de audio completo de principio a fin, manteniendo la duración íntegra sin omitir fragmentos.
+        Actúa como un transcriptor profesional y analista de sesiones de coaching ontológico.
+        A partir del siguiente texto transcrito por Whisper, estructúralo de forma íntegra aplicando estas reglas estrictas:
+        1. Identifica y etiqueta a los hablantes estrictamente como "**COACH** (${coachName})" y "**CLIENTE**".
+        2. Añade marcas de tiempo proporcionales y estimadas al inicio de cada intervención basadas en la lectura secuencial.
+        3. Mantén las muletillas naturales ("eh", "mhm", "sí", "ajá") relevantes para la evaluación, eliminando repeticiones mecánicas de palabras cortadas.
+        4. Presenta el resultado en párrafos claros y ordenados cronológicamente de principio a fin sin omitir fragmentos.
         
-        Requisitos estrictos de formato:
-        1. Identifica y etiqueta a los hablantes estrictamente como "CLIENTE" y el nombre institucional del Coach según corresponda.
-        2. Anonimiza cualquier dato sensible, nombres de terceros o información privada mencionada.
-        3. Estructura el resultado con marcas de tiempo (timestamps) ordenadas y párrafos claros.
+        Texto crudo a estructurar:
+        ${rawText}
       `;
 
-      const result = await model.generateContent([
-        {
-          fileData: {
-            fileUri: uploadResponse.file.uri,
-            mimeType: uploadResponse.file.mimeType,
-          },
-        },
-        prompt,
-      ]);
+      const result = await model.generateContent(prompt);
+      const formattedText = result.response.text();
 
-      let responseText = "";
-      try {
-        responseText = result.response.text();
-      } catch (textErr) {
-        console.error("Error extrayendo texto de la respuesta:", textErr);
-        responseText = "Transcripción generada.";
-      }
+      // Limpieza de archivos temporales
+      if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      if (compressedPath && fs.existsSync(compressedPath)) fs.unlinkSync(compressedPath);
 
-      if (!responseText) {
-        responseText = "La IA procesó el audio pero no devolvió contenido de texto.";
-      }
-
-      if (filePath && fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
-      return res.status(200).json({ success: true, transcription: responseText });
+      return res.status(200).json({ success: true, transcription: formattedText });
 
     } catch (error) {
       console.error("Error en el servidor:", error);
-      if (filePath && fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-      return res.status(500).json({ error: error.message || "Error al procesar el audio con la IA." });
+      if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      if (compressedPath && fs.existsSync(compressedPath)) fs.unlinkSync(compressedPath);
+      
+      return res.status(500).json({ error: error.message || "Error al procesar la transcripción." });
     }
   });
 });
 
 app.listen(port, () => {
-  console.log(`Servidor de Render corriendo en el puerto ${port}`);
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });
