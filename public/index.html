@@ -1,499 +1,248 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Transcriptor de Sesiones de Coaching</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <style>
-    :root {
-      --primary: #3b2d71;
-      --primary-light: #f6f4fb;
-      --primary-hover: #2d2159;
-      --border: #dcd6ec;
-      --text: #1f2937;
-      --muted: #6b7280;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 24px 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f3f1f9;
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(59, 45, 113, 0.08);
-      overflow: hidden;
-    }
-
-    .header {
-      background-color: var(--primary);
-      color: #ffffff;
-      padding: 24px 28px;
-    }
-
-    .header h1 {
-      margin: 0 0 6px 0;
-      font-size: 1.45rem;
-      font-weight: 700;
-    }
-
-    .header p {
-      margin: 0;
-      font-size: 0.92rem;
-      opacity: 0.9;
-    }
-
-    .form-body {
-      padding: 28px;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    @media (max-width: 560px) {
-      .grid-2 { grid-template-columns: 1fr; }
-    }
-
-    .field {
-      margin-bottom: 18px;
-    }
-
-    label {
-      display: block;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 6px;
-    }
-
-    input[type="text"],
-    input[type="date"],
-    input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.95rem;
-      color: var(--text);
-      transition: border-color 0.2s;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .dropzone {
-      border: 2px dashed #b9aed8;
-      background-color: var(--primary-light);
-      border-radius: 10px;
-      padding: 24px 16px;
-      text-align: center;
-      cursor: pointer;
-      transition: background-color 0.2s, border-color 0.2s;
-    }
-
-    .dropzone:hover, .dropzone.dragover {
-      background-color: #ece7f8;
-      border-color: var(--primary);
-    }
-
-    .dropzone input {
-      display: none;
-    }
-
-    .dropzone-title {
-      font-weight: 600;
-      color: var(--primary);
-      font-size: 0.98rem;
-      margin-bottom: 4px;
-    }
-
-    .dropzone-sub {
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-
-    .file-selected {
-      margin-top: 10px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: #166534;
-      background: #dcfce7;
-      padding: 6px 12px;
-      border-radius: 6px;
-      display: inline-block;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 13px 18px;
-      background-color: var(--primary);
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .btn:hover:not(:disabled) {
-      background-color: var(--primary-hover);
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .status-box {
-      margin-top: 18px;
-      padding: 14px 16px;
-      border-radius: 8px;
-      font-size: 0.92rem;
-      display: none;
-    }
-
-    .status-loading {
-      display: block;
-      background-color: var(--primary-light);
-      border-left: 4px solid var(--primary);
-      color: var(--primary);
-    }
-
-    .status-error {
-      display: block;
-      background-color: #fef2f2;
-      border-left: 4px solid #dc2626;
-      color: #991b1b;
-    }
-
-    .status-success {
-      display: block;
-      background-color: #f0fdf4;
-      border-left: 4px solid #16a34a;
-      color: #166534;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(59, 45, 113, 0.3);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-right: 8px;
-      vertical-align: -2px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .secondary-btn {
-      margin-top: 12px;
-      background-color: #16a34a;
-    }
-    .secondary-btn:hover {
-      background-color: #15803d;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transcriptor de Sesiones de Coaching</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            primary-color: #3f2b96;
+            secondary-color: #a8c0ff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #3f2b96, #a8c0ff);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #3f2b96;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .dropzone {
+            border: 2px dashed #a8c0ff;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            background: #f9f9fb;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .dropzone:hover {
+            background: #f1f4ff;
+        }
+        .dropzone p {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+        }
+        #file-info {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 14px;
+        }
+        button.submit-btn {
+            background: #3f2b96;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button.submit-btn:hover {
+            background: #2f1f73;
+        }
+        button.submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #3f2b96;
+            font-weight: bold;
+        }
+        #error-msg {
+            display: none;
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            border-left: 4px solid #c62828;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Transcriptor de Sesiones de Coaching</h1>
-      <p>Subí el audio de tu sesión para generar automáticamente el PDF literal con marcas de tiempo.</p>
+    <div class="card">
+        <h1>Transcriptor de Sesiones de Coaching</h1>
+        <p class="subtitle">Subí el audio de tu sesión para generar automáticamente el PDF literal con marcas de tiempo.</p>
+        
+        <form id="transcription-form">
+            <div class="form-group">
+                <label>Coach (quien entrega el trabajo) *</label>
+                <input type="text" id="coach-name" value="CARLOS HOFFMANN" required />
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Fecha de la sesión *</label>
+                    <input type="date" id="session-date" required />
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Clave del grupo (opcional)</label>
+                    <input type="text" id="group-key" placeholder="Si el grupo usa clave" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Archivo de audio *</label>
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('audio-file').click()">
+                    <p>Hacé clic acá o arrastrá tu archivo de audio</p>
+                    <p style="font-size: 12px; color: #888; margin-top: 5px;">Formatos compatibles: MP3, M4A, WAV, OGG, WhatsApp Audio</p>
+                    <input type="file" id="audio-file" accept="audio/*" style="display: none;" />
+                </div>
+                <div id="file-info"></div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-btn">Transcribir y Descargar PDF</button>
+        </form>
+
+        <div id="loading">Procesando audio completo con IA (esto puede tomar unos minutos)...</div>
+        <div id="error-msg" id="error-box"></div>
     </div>
 
-    <div class="form-body">
-      <form id="transcribeForm">
-        <div class="field">
-          <label for="coachName">Coach (quien entrega el trabajo) *</label>
-          <input type="text" id="coachName" placeholder="Ej: Carlos Menchon" required />
-        </div>
+    <script>
+        const fileInput = document.getElementById('audio-file');
+        const fileInfo = document.getElementById('file-info');
+        const form = document.getElementById('transcription-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('error-msg');
 
-        <div class="grid-2">
-          <div class="field">
-            <label for="sessionDate">Fecha de la sesión *</label>
-            <input type="date" id="sessionDate" required />
-          </div>
-          <div class="field">
-            <label for="accessCode">Clave del grupo (opcional)</label>
-            <input type="password" id="accessCode" placeholder="Si el grupo usa clave" />
-          </div>
-        </div>
+        // Establecer fecha de hoy por defecto
+        document.getElementById('session-date').valueAsDate = new Date();
 
-        <div class="field">
-          <label>Archivo de audio *</label>
-          <div class="dropzone" id="dropzone">
-            <input type="file" id="audioFile" accept="audio/*,video/mpeg,.mp3,.m4a,.wav,.ogg,.mpeg" required />
-            <div class="dropzone-title">Hacé clic acá o arrastrá tu archivo de audio</div>
-            <div class="dropzone-sub">Formatos compatibles: MP3, M4A, WAV, OGG, WhatsApp Audio (máx. ~35 MB)</div>
-            <div id="fileNameDisplay"></div>
-          </div>
-        </div>
-
-        <button type="submit" class="btn" id="submitBtn">Transcribir y Descargar PDF</button>
-      </form>
-
-      <div id="statusBox" class="status-box"></div>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById("sessionDate").valueAsDate = new Date();
-
-    const dropzone = document.getElementById("dropzone");
-    const fileInput = document.getElementById("audioFile");
-    const fileNameDisplay = document.getElementById("fileNameDisplay");
-    const form = document.getElementById("transcribeForm");
-    const statusBox = document.getElementById("statusBox");
-    const submitBtn = document.getElementById("submitBtn");
-
-    let lastPdfDoc = null;
-    let lastPdfFilename = "Transcripcion_Sesion.pdf";
-
-    dropzone.addEventListener("click", () => fileInput.click());
-
-    dropzone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropzone.classList.add("dragover");
-    });
-
-    dropzone.addEventListener("dragleave", () => {
-      dropzone.classList.remove("dragover");
-    });
-
-    dropzone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropzone.classList.remove("dragover");
-      if (e.dataTransfer.files.length) {
-        fileInput.files = e.dataTransfer.files;
-        updateFileName();
-      }
-    });
-
-    fileInput.addEventListener("change", updateFileName);
-
-    function updateFileName() {
-      if (fileInput.files.length > 0) {
-        const f = fileInput.files[0];
-        const sizeMB = (f.size / (1024 * 1024)).toFixed(2);
-        fileNameDisplay.innerHTML = `<div class="file-selected">Archivo: ${f.name} (${sizeMB} MB)</div>`;
-      }
-    }
-
-    function formatSpanishDate(isoDate) {
-      const months = [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-      ];
-      const [year, month, day] = isoDate.split("-");
-      return `${parseInt(day, 10)} de ${months[parseInt(month, 10) - 1]} de ${year}`;
-    }
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result;
-          const base64 = result.split(",")[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function generatePDF(segments, metadata) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
-
-      const purple = [59, 45, 113]; // #3b2d71
-      const lightBg = [246, 244, 251]; // #f6f4fb
-
-      // Título principal
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.setTextColor(...purple);
-      doc.text("Transcripción de sesión", 15, 22);
-
-      // Línea divisoria
-      doc.setDrawColor(...purple);
-      doc.setLineWidth(0.7);
-      doc.line(15, 26, 195, 26);
-
-      // Subtítulo: Detalles de la transcripción
-      doc.setFontSize(13);
-      doc.text("Detalles de la transcripción", 15, 36);
-
-      // Caja de detalles
-      doc.setFillColor(...lightBg);
-      doc.rect(15, 40, 180, 22, "F");
-      doc.setFillColor(...purple);
-      doc.rect(15, 40, 1.5, 22, "F");
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...purple);
-      doc.text("Coach:", 20, 47);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(31, 41, 55);
-      doc.text(metadata.coachName, 34, 47);
-
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...purple);
-      doc.text("Fecha:", 20, 53);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(31, 41, 55);
-      doc.text(metadata.formattedDate, 34, 53);
-
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...purple);
-      doc.text("Archivo de audio:", 20, 59);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(31, 41, 55);
-      doc.text(metadata.fileName, 52, 59);
-
-      // Subtítulo: Resultados de la transcripción
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(...purple);
-      doc.text("Resultados de la transcripción", 15, 72);
-
-      const tableRows = segments.map((seg) => [
-        `${seg.rol}  ${seg.tiempo}`,
-        seg.texto
-      ]);
-
-      doc.autoTable({
-        startY: 76,
-        head: [["Interlocutor y tiempo", "Diálogo"]],
-        body: tableRows,
-        theme: "plain",
-        margin: { left: 15, right: 15, bottom: 18 },
-        headStyles: {
-          fillColor: purple,
-          textColor: [255, 255, 255],
-          fontStyle: "bold",
-          fontSize: 9.5,
-          cellPadding: 3
-        },
-        bodyStyles: {
-          fontSize: 9.5,
-          textColor: [31, 41, 55],
-          cellPadding: 3,
-          valign: "top"
-        },
-        alternateRowStyles: {
-          fillColor: [247, 245, 252]
-        },
-        columnStyles: {
-          0: {
-            cellWidth: 40,
-            fontStyle: "bold",
-            textColor: purple
-          },
-          1: {
-            cellWidth: 140
-          }
-        },
-        didDrawPage: function (data) {
-          const pageCount = doc.internal.getNumberOfPages();
-          doc.setFontSize(8.5);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(107, 114, 128);
-          doc.text(
-            `Página ${data.pageNumber} de ${pageCount}`,
-            195,
-            289,
-            { align: "right" }
-          );
-        }
-      });
-
-      return doc;
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      if (file.size > 36 * 1024 * 1024) {
-        statusBox.className = "status-box status-error";
-        statusBox.textContent = "El archivo supera los 36 MB. Comprimilo o convertilo a MP3 ligero antes de subirlo.";
-        return;
-      }
-
-      const coachName = document.getElementById("coachName").value.trim();
-      const sessionDate = document.getElementById("sessionDate").value;
-      const accessCode = document.getElementById("accessCode").value.trim();
-
-      submitBtn.disabled = true;
-      statusBox.className = "status-box status-loading";
-      statusBox.innerHTML = `<span class="spinner"></span>Subiendo audio y generando transcripción literal con IA... Esto puede demorar entre 30 segundos y 2 minutos según la duración de la sesión.`;
-
-      try {
-        const audioBase64 = await fileToBase64(file);
-        const mimeType = file.type || "audio/mpeg";
-
-        const response = await fetch("/api/transcribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            audioBase64,
-            mimeType,
-            coachName,
-            accessCode
-          })
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                fileInfo.textContent = `Archivo seleccionado: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
+            }
         });
 
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Error al transcribir el audio.");
-        }
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
 
-        const formattedDate = formatSpanishDate(sessionDate);
-        lastPdfDoc = generatePDF(data.segments, {
-          formattedDate,
-          fileName: file.name,
-          coachName
+            if (!fileInput.files || fileInput.files.length === 0) {
+                errorMsg.textContent = "Error: Por favor seleccioná un archivo de audio.";
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', fileInput.files[0]);
+            formData.append('coach', document.getElementById('coach-name').value);
+            formData.append('date', document.getElementById('session-date').value);
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData // Importante: Sin cabecera Content-Type manual para que el navegador cree el boundary multipart
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Error al procesar la solicitud en el servidor.");
+                }
+
+                // Generar PDF con jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.text("TRANSCRIPCIÓN DE SESIÓN DE COACHING", 14, 20);
+                
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Coach: ${document.getElementById('coach-name').value}`, 14, 28);
+                doc.text(`Fecha: ${document.getElementById('session-date').value}`, 14, 34);
+                doc.line(14, 38, 196, 38);
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                const splitText = doc.splitTextToSize(data.transcription, 180);
+                
+                let y = 45;
+                for (let i = 0; i < splitText.length; i++) {
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(splitText[i], 14, y);
+                    y += 6;
+                }
+
+                doc.save(`Transcripcion_${document.getElementById('session-date').value}.pdf`);
+
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = `Error: ${err.message}`;
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
         });
-
-        lastPdfFilename = `Transcripcion_${coachName}_${sessionDate}.pdf`.replace(/\s+/g, "_");
-        lastPdfDoc.save(lastPdfFilename);
-
-        statusBox.className = "status-box status-success";
-        statusBox.innerHTML = `
-          <strong>¡Transcripción completada!</strong> El archivo PDF se descargó automáticamente.<br/>
-          <button type="button" class="btn secondary-btn" onclick="lastPdfDoc.save(lastPdfFilename)">Volver a descargar PDF</button>
-        `;
-      } catch (err) {
-        statusBox.className = "status-box status-error";
-        statusBox.textContent = "Error: " + err.message;
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
