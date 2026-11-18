@@ -47,7 +47,6 @@ app.post("/api/transcribe", async (req, res) => {
       filePath = audioFile.filepath;
       const originalFilename = audioFile.originalFilename || "audio.mp3";
 
-      // Subida al Administrador de Archivos de Google AI Studio
       const uploadResponse = await fileManager.uploadFile(filePath, {
         mimeType: "audio/mp3",
         displayName: originalFilename,
@@ -63,7 +62,7 @@ app.post("/api/transcribe", async (req, res) => {
         throw new Error("El procesamiento del audio falló en los servidores de Google.");
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
       const prompt = `
         Actúa como un transcriptor profesional y analista de sesiones de coaching ejecutivo.
