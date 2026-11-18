@@ -7,8 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            primary-color: #3f2b96;
-            secondary-color: #a8c0ff;
+            --primary-color: #3f2b96;
+            --secondary-color: #a8c0ff;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -103,7 +103,23 @@
             text-align: center;
             margin-top: 20px;
             color: #3f2b96;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .spinner {
+            border: 4px solid rgba(63, 43, 150, 0.1);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border-left-color: #3f2b96;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 12px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         #error-msg {
             display: none;
@@ -125,7 +141,7 @@
         <form id="transcription-form">
             <div class="form-group">
                 <label>Coach (quien entrega el trabajo) *</label>
-                <input type="text" id="coach-name" value="CARLOS HOFFMANN" required />
+                <input type="text" id="coach-name" placeholder="Nombre y apellido del coach" required />
             </div>
 
             <div style="display: flex; gap: 15px;">
@@ -152,8 +168,10 @@
             <button type="submit" class="submit-btn" id="submit-btn">Transcribir y Descargar PDF</button>
         </form>
 
-        <div id="loading">Procesando audio completo con IA (esto puede tomar unos minutos)...</div>
-        <div id="error-msg" id="error-box"></div>
+        <div id="loading">
+            <div class="spinner"></div> Procesando audio completo con IA (esto puede tomar unos minutos)...
+        </div>
+        <div id="error-msg"></div>
     </div>
 
     <script>
@@ -164,7 +182,6 @@
         const loading = document.getElementById('loading');
         const errorMsg = document.getElementById('error-msg');
 
-        // Establecer fecha de hoy por defecto
         document.getElementById('session-date').valueAsDate = new Date();
 
         fileInput.addEventListener('change', (e) => {
@@ -195,7 +212,7 @@
             try {
                 const response = await fetch('/api/transcribe', {
                     method: 'POST',
-                    body: formData // Importante: Sin cabecera Content-Type manual para que el navegador cree el boundary multipart
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -204,7 +221,6 @@
                     throw new Error(data.error || "Error al procesar la solicitud en el servidor.");
                 }
 
-                // Generar PDF con jsPDF
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
