@@ -47,6 +47,7 @@ app.post("/api/transcribe", async (req, res) => {
       filePath = audioFile.filepath;
       const originalFilename = audioFile.originalFilename || "audio.mp3";
 
+      // Subida al Administrador de Archivos de Google AI Studio
       const uploadResponse = await fileManager.uploadFile(filePath, {
         mimeType: "audio/mp3",
         displayName: originalFilename,
