@@ -63,7 +63,7 @@ app.post("/api/transcribe", async (req, res) => {
         throw new Error("El procesamiento del audio falló en los servidores de Google.");
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const prompt = `
         Actúa como un transcriptor profesional y analista de sesiones de coaching ejecutivo.
@@ -90,7 +90,7 @@ app.post("/api/transcribe", async (req, res) => {
         responseText = result.response.text();
       } catch (textErr) {
         console.error("Error extrayendo texto de la respuesta:", textErr);
-        responseText = "Transcripción generada, pero hubo un detalle al formatear el texto.";
+        responseText = "Transcripción generada.";
       }
 
       if (!responseText) {
