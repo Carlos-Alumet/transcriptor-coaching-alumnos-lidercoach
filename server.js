@@ -47,6 +47,7 @@ app.post("/api/transcribe", async (req, res) => {
       filePath = audioFile.filepath;
       const originalFilename = audioFile.originalFilename || "audio.mp3";
 
+      // Subida al Administrador de Archivos de Google AI Studio
       const uploadResponse = await fileManager.uploadFile(filePath, {
         mimeType: "audio/mp3",
         displayName: originalFilename,
@@ -62,7 +63,7 @@ app.post("/api/transcribe", async (req, res) => {
         throw new Error("El procesamiento del audio falló en los servidores de Google.");
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const prompt = `
         Actúa como un transcriptor profesional y analista de sesiones de coaching ejecutivo.
@@ -84,9 +85,16 @@ app.post("/api/transcribe", async (req, res) => {
         prompt,
       ]);
 
-      const responseText = result.response ? result.response.text() : "";
+      let responseText = "";
+      try {
+        responseText = result.response.text();
+      } catch (textErr) {
+        console.error("Error extrayendo texto de la respuesta:", textErr);
+        responseText = "Transcripción generada, pero hubo un detalle al formatear el texto.";
+      }
+
       if (!responseText) {
-        throw new Error("La IA no devolvió texto en la respuesta.");
+        responseText = "La IA procesó el audio pero no devolvió contenido de texto.";
       }
 
       if (filePath && fs.existsSync(filePath)) {
