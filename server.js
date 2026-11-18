@@ -7,7 +7,6 @@ import fs from "fs";
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Servir la interfaz web estática desde la carpeta "public"
 app.use(express.static("public"));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -22,7 +21,7 @@ app.post("/api/transcribe", async (req, res) => {
   const form = formidable({ 
     uploadDir, 
     keepExtensions: true,
-    maxFileSize: 100 * 1024 * 1024 // Permite archivos de hasta 100 MB holgadamente
+    maxFileSize: 100 * 1024 * 1024 
   });
 
   form.parse(req, async (err, fields, files) => {
@@ -33,16 +32,23 @@ app.post("/api/transcribe", async (req, res) => {
         return res.status(400).json({ error: "Error al recibir el archivo de audio." });
       }
 
-      const audioFileArray = files.audio || files.file;
-      if (!audioFileArray) {
-        return res.status(400).json({ error: "No se encontró ningún archivo de audio." });
+      // Buscar el archivo sin importar cómo lo haya nombrado el formulario web
+      const possibleKeys = Object.keys(files);
+      if (possibleKeys.length === 0) {
+        return res.status(400).json({ error: "No se encontró ningún archivo de audio en la petición." });
       }
 
+      const audioFileArray = files[possibleKeys[0]];
       const audioFile = Array.isArray(audioFileArray) ? audioFileArray[0] : audioFileArray;
+      
+      if (!audioFile || !audioFile.filepath) {
+        return res.status(400).json({ error: "El archivo de audio recibido es inválido." });
+      }
+
       filePath = audioFile.filepath;
       const originalFilename = audioFile.originalFilename || "audio.mp3";
 
-      // Subida directa al Administrador de Archivos de Google AI Studio
+      // Subida al Administrador de Archivos de Google AI Studio
       const uploadResponse = await fileManager.uploadFile(filePath, {
         mimeType: "audio/mp3",
         displayName: originalFilename,
@@ -82,7 +88,6 @@ app.post("/api/transcribe", async (req, res) => {
 
       const responseText = result.response.text();
 
-      // Limpiar archivo temporal local
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
