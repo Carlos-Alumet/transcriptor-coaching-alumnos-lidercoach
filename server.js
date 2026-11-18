@@ -32,7 +32,6 @@ app.post("/api/transcribe", async (req, res) => {
         return res.status(400).json({ error: "Error al recibir el archivo de audio." });
       }
 
-      // Buscar el archivo sin importar cómo lo haya nombrado el formulario web
       const possibleKeys = Object.keys(files);
       if (possibleKeys.length === 0) {
         return res.status(400).json({ error: "No se encontró ningún archivo de audio en la petición." });
@@ -64,7 +63,7 @@ app.post("/api/transcribe", async (req, res) => {
         throw new Error("El procesamiento del audio falló en los servidores de Google.");
       }
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const prompt = `
         Actúa como un transcriptor profesional y analista de sesiones de coaching ejecutivo.
@@ -86,7 +85,10 @@ app.post("/api/transcribe", async (req, res) => {
         prompt,
       ]);
 
-      const responseText = result.response.text();
+      const responseText = result.response ? result.response.text() : "";
+      if (!responseText) {
+        throw new Error("La IA no devolvió texto en la respuesta.");
+      }
 
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
