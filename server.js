@@ -53,10 +53,10 @@ app.post("/api/transcribe", async (req, res) => {
         displayName: originalFilename,
       });
 
-      let fileState = await fileManager.getFile(uploadResponse.name);
+      let fileState = await fileManager.getFile(uploadResponse.file.name);
       while (fileState.state === "PROCESSING") {
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        fileState = await fileManager.getFile(uploadResponse.name);
+        fileState = await fileManager.getFile(uploadResponse.file.name);
       }
 
       if (fileState.state === "FAILED") {
@@ -78,8 +78,8 @@ app.post("/api/transcribe", async (req, res) => {
       const result = await model.generateContent([
         {
           fileData: {
-            fileUri: uploadResponse.uri,
-            mimeType: uploadResponse.mimeType,
+            fileUri: uploadResponse.file.uri,
+            mimeType: uploadResponse.file.mimeType,
           },
         },
         prompt,
