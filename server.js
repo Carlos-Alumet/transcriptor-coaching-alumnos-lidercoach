@@ -22,7 +22,8 @@ const MODEL = process.env.TRANSCRIBE_MODEL || "gpt-4o-transcribe-diarize";
 const LANGUAGE = process.env.TRANSCRIBE_LANGUAGE ?? "es";
 const CHUNK_SECONDS = Number(process.env.CHUNK_SECONDS || 300); // ~5 min por parte
 const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB || 500);
-const JOB_TTL_MS = 2 * 60 * 60 * 1000; // los resultados se guardan 2 horas
+const PAUSE_SPLIT_SECONDS = Number(process.env.PAUSE_SPLIT_SECONDS || 2);
+const JOB_TTL_MS =2 * 60 * 60 * 1000; // los resultados se guardan 2 horas
 const WORK_ROOT = path.join(os.tmpdir(), "transcriptor-icf");
 
 if (!OPENAI_API_KEY) console.warn("⚠️  Falta la variable de entorno OPENAI_API_KEY");
@@ -30,6 +31,9 @@ fs.mkdirSync(WORK_ROOT, { recursive: true });
 
 const app = express();
 app.use(express.static("public"));
+// Librerías para generar el PDF en el navegador (se sirven desde el propio servidor).
+app.use("/vendor/jspdf", express.static("node_modules/jspdf/dist"));
+app.use("/vendor/autotable", express.static("node_modules/jspdf-autotable/dist"));
 app.get("/healthz", (_req, res) => res.send("ok"));
 
 // ---------------- Trabajos en memoria ----------------
@@ -120,7 +124,9 @@ async function processJob(job, inputPath, workDir, coachName) {
   const chunks = [];
   for (let i = 0; i < cuts.length - 1; i++) {
     const file = path.join(workDir, `chunk_${i}.flac`);
-    await ffmpeg(["-i", full, "-ss", cuts[i].toFixed(3), "-to", cuts[i + 1].toFixed(3), "-c:a", "flac", file]);
+    // Se agrega 1,5 s de silencio al final: evita que el modelo corte las últimas palabras.
+    const trim = `atrim=start=${cuts[i].toFixed(3)}:end=${cuts[i + 1].toFixed(3)},asetpts=PTS-STARTPTS,apad=pad_dur=1.5`;
+    await ffmpeg(["-i", full, "-af", trim, "-c:a", "flac", file]);
     chunks.push({ file, start: cuts[i] });
   }
 
@@ -195,12 +201,20 @@ async function processJob(job, inputPath, workDir, coachName) {
 
   if (!segments.length) throw new Error("No se detectó voz en el audio.");
 
-  // 4) Unir intervenciones consecutivas del mismo hablante y asignar roles.
+  // Control de integridad: ¿la transcripción llega hasta el final del audio?
+  const lastWord = Math.max(...segments.map((s) => s.end));
+  const speechAfter = silences.length ? duration - Math.max(lastWord, lastSilenceStart(silences, duration)) : duration - lastWord;
+  if (speechAfter > 10) {
+    warnings.push(`La transcripción termina en ${hms(lastWord)} pero el audio dura ${hms(duration)}. Revisá si falta el final de la conversación.`);
+  }
+
+  // 4) Unir palabras consecutivas del mismo hablante. Si hay una pausa larga,
+  //    se abre una nueva intervención (nueva fila con su propia marca de tiempo).
   segments.sort((a, b) => a.start - b.start);
   const turns = [];
   for (const s of segments) {
     const last = turns[turns.length - 1];
-    if (last && last.speaker === s.speaker) {
+    if (last && last.speaker === s.speaker && s.start - last.end < PAUSE_SPLIT_SECONDS) {
       last.text += " " + s.text;
       last.end = s.end;
     } else {
@@ -391,6 +405,7 @@ async function analyzeAudio(file) {
       start = null;
     }
   }
+  if (start !== null) silences.push({ start, end: duration }); // silencio que llega hasta el final
   return { duration, silences };
 }
 
@@ -422,6 +437,12 @@ async function makeVoiceSample(chunkFile, start, end, workDir, name) {
   await ffmpeg(["-i", chunkFile, "-ss", from.toFixed(3), "-t", len.toFixed(3),
     "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", out]);
   return `data:audio/wav;base64,${(await fsp.readFile(out)).toString("base64")}`;
+}
+
+// Si el audio termina en silencio, devuelve dónde empieza ese silencio final.
+function lastSilenceStart(silences, duration) {
+  const last = silences[silences.length - 1];
+  return last && duration - last.end < 1 ? last.start : duration;
 }
 
 const round = (n) => Math.round(n * 100) / 100;
