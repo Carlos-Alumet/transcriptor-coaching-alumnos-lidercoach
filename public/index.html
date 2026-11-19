@@ -1,274 +1,278 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Transcriptor de Sesiones de Coaching</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #3f2b96;
-            --secondary-color: #a8c0ff;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #3f2b96, #a8c0ff);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 600px;
-        }
-        h1 {
-            color: #3f2b96;
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        p.subtitle {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 25px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
-            font-size: 14px;
-        }
-        input[type="text"], input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        .dropzone {
-            border: 2px dashed #a8c0ff;
-            border-radius: 8px;
-            padding: 25px;
-            text-align: center;
-            background: #f9f9fb;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .dropzone:hover {
-            background: #f1f4ff;
-        }
-        .dropzone p {
-            margin: 0;
-            color: #555;
-            font-size: 14px;
-        }
-        #file-info {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #2e7d32;
-            font-size: 14px;
-        }
-        button.submit-btn {
-            background: #3f2b96;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button.submit-btn:hover {
-            background: #2f1f73;
-        }
-        button.submit-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        #loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-            color: #3f2b96;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        .spinner {
-            border: 4px solid rgba(63, 43, 150, 0.1);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border-left-color: #3f2b96;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 12px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #error-msg {
-            display: none;
-            background: #fff3cd;
-            color: #856404;
-            padding: 14px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 14px;
-            border-left: 4px solid #ffc107;
-            line-height: 1.5;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Transcriptor de sesiones de coaching · ICF</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e4e2dc; --accent:#1f5f8b; --coach:#1f5f8b; --cliente:#8b4a1f; --err:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  label { display:block; font-weight:600; margin: 0 0 6px; }
+  input[type=text] { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .drop { border:2px dashed var(--line); border-radius:10px; padding:22px; text-align:center; color:var(--muted); cursor:pointer; margin-top:16px; }
+  .drop.over { border-color: var(--accent); background:#eef4f8; }
+  .drop strong { color: var(--ink); }
+  button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  button.ghost { background:#fff; color:var(--accent); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .actions { margin-top:16px; }
+  .bar { height:8px; background:var(--line); border-radius:99px; overflow:hidden; margin:10px 0 6px; }
+  .bar > div { height:100%; width:0; background:var(--accent); transition: width .4s; }
+  .muted { color: var(--muted); font-size:.92rem; }
+  .error { color: var(--err); font-weight:600; }
+  .hidden { display:none !important; }
+  .toolbar { position: sticky; top: 0; background: var(--card); padding-bottom: 12px; border-bottom:1px solid var(--line); margin-bottom: 14px; z-index: 1; }
+  .turn { margin: 0 0 14px; }
+  .ts { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .9rem; margin-right: 6px; }
+  .who { font-weight: 700; }
+  .who.COACH { color: var(--coach); }
+  .who.CLIENTE { color: var(--cliente); }
+  .txt { outline: none; border-radius: 4px; }
+  .txt:focus { background: #fffbe6; }
+</style>
 </head>
 <body>
-    <div class="card">
-        <h1>Transcriptor de Sesiones de Coaching</h1>
-        <p class="subtitle">Subí el audio de tu sesión para generar automáticamente el PDF literal con marcas de tiempo.</p>
-        
-        <form id="transcription-form">
-            <div class="form-group">
-                <label>Coach (quien entrega el trabajo) *</label>
-                <input type="text" id="coach-name" placeholder="Nombre y apellido del coach" required />
-            </div>
+<main>
+  <h1>Transcriptor de sesiones de coaching</h1>
+  <p class="sub">Formato ICF: hablantes identificados, marcas de tiempo reales del audio y transcripción literal.</p>
 
-            <div style="display: flex; gap: 15px;">
-                <div class="form-group" style="flex: 1;">
-                    <label>Fecha de la sesión *</label>
-                    <input type="date" id="session-date" required />
-                </div>
-                <div class="form-group" style="flex: 1;">
-                    <label>Clave del grupo (opcional)</label>
-                    <input type="text" id="group-key" placeholder="Si el grupo usa clave" />
-                </div>
-            </div>
+  <section class="card" id="formCard">
+    <label for="coach">Nombre del coach</label>
+    <input type="text" id="coach" placeholder="Ej.: María González" autocomplete="off" />
 
-            <div class="form-group">
-                <label>Archivo de audio *</label>
-                <div class="dropzone" id="dropzone" onclick="document.getElementById('audio-file').click()">
-                    <p>Hacé clic acá o arrastrá tu archivo de audio</p>
-                    <p style="font-size: 12px; color: #888; margin-top: 5px;">Formatos compatibles: MP3, M4A, WAV, OGG, WhatsApp Audio</p>
-                    <input type="file" id="audio-file" accept="audio/*" style="display: none;" />
-                </div>
-                <div id="file-info"></div>
-            </div>
-
-            <button type="submit" class="submit-btn" id="submit-btn">Transcribir y Descargar PDF</button>
-        </form>
-
-        <div id="loading">
-            <div class="spinner"></div> Procesando audio completo con IA (esto puede tomar unos minutos)...
-        </div>
-        <div id="error-msg"></div>
+    <div class="drop" id="drop">
+      <strong>Elegí o arrastrá el audio de la sesión</strong><br />
+      <span class="muted">MP3, M4A, WAV, OGG o video (MP4). Hasta 500 MB.</span>
+      <div id="fileName" class="muted" style="margin-top:8px"></div>
     </div>
+    <input type="file" id="file" accept="audio/*,video/*" class="hidden" />
 
-    <script>
-        const fileInput = document.getElementById('audio-file');
-        const fileInfo = document.getElementById('file-info');
-        const form = document.getElementById('transcription-form');
-        const submitBtn = document.getElementById('submit-btn');
-        const loading = document.getElementById('loading');
-        const errorMsg = document.getElementById('error-msg');
+    <div class="row actions">
+      <button id="go" disabled>Transcribir</button>
+      <span id="formMsg" class="muted"></span>
+    </div>
+  </section>
 
-        document.getElementById('session-date').valueAsDate = new Date();
+  <section class="card hidden" id="progressCard">
+    <div id="stage">Subiendo el archivo…</div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="muted">Una sesión de una hora tarda unos minutos. Podés dejar esta pestaña abierta y hacer otra cosa.</div>
+  </section>
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                fileInfo.textContent = `Archivo seleccionado: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
-            }
-        });
+  <section class="card hidden" id="resultCard">
+    <div class="toolbar">
+      <div class="row">
+        <button id="swap" class="ghost" title="Usalo si el coach y el cliente quedaron al revés">⇄ Intercambiar COACH / CLIENTE</button>
+        <button id="copy" class="ghost">Copiar (con formato)</button>
+        <button id="download">Descargar .txt</button>
+        <button id="again" class="ghost">Nueva transcripción</button>
+      </div>
+      <div id="warnings" class="error" style="margin-top:8px"></div>
+      <div class="muted" style="margin-top:8px">Podés corregir cualquier texto haciendo clic sobre él. <span id="meta"></span></div>
+    </div>
+    <div id="transcript"></div>
+  </section>
+</main>
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMsg.style.display = 'none';
+<script>
+const $ = (id) => document.getElementById(id);
+let selectedFile = null;
+let result = null;
 
-            if (!fileInput.files || fileInput.files.length === 0) {
-                errorMsg.textContent = "Error: Por favor seleccioná un archivo de audio.";
-                errorMsg.style.display = 'block';
-                return;
-            }
+// ---------- Selección de archivo ----------
+const drop = $("drop"), fileInput = $("file");
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => pickFile(fileInput.files[0]);
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => pickFile(e.dataTransfer.files[0]));
 
-            const formData = new FormData();
-            formData.append('audio', fileInput.files[0]);
-            formData.append('coach', document.getElementById('coach-name').value);
-            formData.append('date', document.getElementById('session-date').value);
+function pickFile(f) {
+  if (!f) return;
+  selectedFile = f;
+  $("fileName").textContent = `${f.name} · ${(f.size / 1048576).toFixed(1)} MB`;
+  $("go").disabled = false;
+}
 
-            submitBtn.disabled = true;
-            loading.style.display = 'block';
+// ---------- Envío y seguimiento ----------
+$("go").onclick = async () => {
+  if (!selectedFile) return;
+  const fd = new FormData();
+  fd.append("coach", $("coach").value.trim());
+  fd.append("audio", selectedFile);
+  show("progress");
+  setProgress(0, "Subiendo el archivo…");
 
-            try {
-                const response = await fetch('/api/transcribe', {
-                    method: 'POST',
-                    body: formData
-                });
+  try {
+    const jobId = await upload(fd);
+    store("jobId", jobId);
+    poll(jobId);
+  } catch (e) {
+    fail(e.message);
+  }
+};
 
-                const data = await response.json();
+function upload(fd) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/jobs");
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100), `Subiendo el archivo… ${Math.round((e.loaded / e.total) * 100)}%`);
+    };
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText); } catch {}
+      xhr.status === 202 && data.jobId ? resolve(data.jobId) : reject(new Error(data.error || `Error del servidor (${xhr.status}).`));
+    };
+    xhr.onerror = () => reject(new Error("No se pudo conectar con el servidor."));
+    xhr.send(fd);
+  });
+}
 
-                if (!response.ok) {
-                    throw new Error(data.error || "Error al procesar la solicitud en el servidor.");
-                }
+async function poll(jobId) {
+  let failures = 0;
+  while (true) {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+      const job = await res.json();
+      if (res.status === 404) return fail("El servidor se reinició y se perdió el trabajo. Volvé a subir el audio.");
+      failures = 0;
+      if (job.status === "done") { store("jobId", null); return showResult(job.result); }
+      if (job.status === "error") { store("jobId", null); return fail(job.error); }
+      setProgress(job.progress, job.message);
+    } catch {
+      if (++failures > 20) return fail("Se perdió la conexión con el servidor.");
+    }
+    await new Promise(r => setTimeout(r, 3000));
+  }
+}
 
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(16);
-                doc.text("TRANSCRIPCIÓN DE SESIÓN DE COACHING", 14, 20);
-                
-                doc.setFontSize(11);
-                doc.setFont("helvetica", "normal");
-                doc.text(`Coach: ${document.getElementById('coach-name').value}`, 14, 28);
-                doc.text(`Fecha: ${document.getElementById('session-date').value}`, 14, 34);
-                doc.line(14, 38, 196, 38);
+function setProgress(pct, msg) {
+  $("barFill").style.width = Math.max(2, pct || 0) + "%";
+  $("stage").textContent = msg;
+}
 
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(10);
-                const splitText = doc.splitTextToSize(data.transcription, 180);
-                
-                let y = 45;
-                for (let i = 0; i < splitText.length; i++) {
-                    if (y > 280) {
-                        doc.addPage();
-                        y = 20;
-                    }
-                    doc.text(splitText[i], 14, y);
-                    y += 6;
-                }
+function fail(msg) {
+  show("form");
+  $("formMsg").innerHTML = `<span class="error">${esc(msg || "Ocurrió un error.")}</span>`;
+}
 
-                doc.save(`Transcripcion_${document.getElementById('session-date').value}.pdf`);
+function show(which) {
+  $("formCard").classList.toggle("hidden", which !== "form");
+  $("progressCard").classList.toggle("hidden", which !== "progress");
+  $("resultCard").classList.toggle("hidden", which !== "result");
+}
 
-            } catch (err) {
-                console.error(err);
-                let message = err.message;
-                
-                // Detectar si es error de servidores saturados (503 / high demand)
-                if (message.includes('503') || message.includes('high demand') || message.includes('Service Unavailable')) {
-                    message = "⚠️ <strong>Servidores de Google ocupados (Alta demanda).</strong> Los servidores están recibiendo muchas peticiones en este momento. Por favor, esperá 2 o 3 minutos y volvé a hacer clic en 'Transcribir y Descargar PDF'.";
-                } else {
-                    message = `<strong>Error:</strong> ${message}`;
-                }
+// ---------- Resultado ----------
+function showResult(r) {
+  result = r;
+  show("result");
+  render();
+}
 
-                errorMsg.innerHTML = message;
-                errorMsg.style.display = 'block';
-            } finally {
-                submitBtn.disabled = false;
-                loading.style.display = 'none';
-            }
-        });
-    </script>
+function label(speaker) {
+  const role = result.roles[speaker] || "OTRO";
+  if (role === "COACH") return { role, name: "COACH", extra: result.coachName ? ` (${result.coachName})` : "" };
+  if (role === "CLIENTE") return { role, name: "CLIENTE", extra: "" };
+  return { role, name: "OTRO HABLANTE", extra: "" };
+}
+
+function render() {
+  $("meta").textContent = `Duración: ${fmt(result.duration)} · ${result.turns.length} intervenciones.`;
+  $("warnings").innerHTML = (result.warnings || []).map(w => "⚠️ " + esc(w)).join("<br>");
+  const box = $("transcript");
+  box.innerHTML = "";
+  result.turns.forEach((t, i) => {
+    const l = label(t.speaker);
+    const p = document.createElement("p");
+    p.className = "turn";
+    p.innerHTML = `<span class="ts">[${fmt(t.start)}]</span><span class="who ${l.role}">${l.name}</span>${esc(l.extra)}: `;
+    const span = document.createElement("span");
+    span.className = "txt";
+    span.contentEditable = "true";
+    span.spellcheck = false;
+    span.textContent = t.text;
+    span.oninput = () => { result.turns[i].text = span.textContent; };
+    p.appendChild(span);
+    box.appendChild(p);
+  });
+}
+
+$("swap").onclick = () => {
+  const coach = Object.keys(result.roles).find(k => result.roles[k] === "COACH");
+  const cliente = Object.keys(result.roles).find(k => result.roles[k] === "CLIENTE");
+  if (coach) result.roles[coach] = "CLIENTE";
+  if (cliente) result.roles[cliente] = "COACH";
+  render();
+};
+
+function header() {
+  return `Sesión de coaching${result.coachName ? ` · Coach: ${result.coachName}` : ""} · Duración: ${fmt(result.duration)}`;
+}
+
+function asText() {
+  const lines = result.turns.map(t => { const l = label(t.speaker); return `[${fmt(t.start)}] ${l.name}${l.extra}: ${t.text}`; });
+  return header() + "\n\n" + lines.join("\n\n") + "\n";
+}
+
+function asHtml() {
+  const lines = result.turns.map(t => {
+    const l = label(t.speaker);
+    return `<p>[${fmt(t.start)}] <b>${l.name}</b>${esc(l.extra)}: ${esc(t.text)}</p>`;
+  });
+  return `<p><i>${esc(header())}</i></p>` + lines.join("");
+}
+
+$("copy").onclick = async () => {
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      "text/html": new Blob([asHtml()], { type: "text/html" }),
+      "text/plain": new Blob([asText()], { type: "text/plain" }),
+    })]);
+  } catch {
+    await navigator.clipboard.writeText(asText());
+  }
+  flash($("copy"), "¡Copiado!");
+};
+
+$("download").onclick = () => {
+  const blob = new Blob(["﻿" + asText()], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `transcripcion${result.coachName ? "-" + result.coachName.replace(/\s+/g, "_") : ""}.txt`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+$("again").onclick = () => {
+  if (!confirm("¿Empezar una nueva transcripción? Si no la descargaste, se pierde la actual.")) return;
+  result = null; selectedFile = null; fileInput.value = "";
+  $("fileName").textContent = ""; $("formMsg").textContent = ""; $("go").disabled = true;
+  show("form");
+};
+
+// ---------- Utilidades ----------
+function fmt(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function flash(btn, txt) { const o = btn.textContent; btn.textContent = txt; setTimeout(() => btn.textContent = o, 1500); }
+function store(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
+
+// Si se recargó la página en medio de un proceso, retomarlo.
+(() => {
+  let id = null;
+  try { id = localStorage.getItem("jobId"); } catch {}
+  if (id) { show("progress"); setProgress(0, "Retomando…"); poll(id); }
+})();
+</script>
 </body>
 </html>
