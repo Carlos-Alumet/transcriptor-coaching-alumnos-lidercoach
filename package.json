@@ -1,6 +1,6 @@
 {
   "name": "transcriptor-coaching",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Transcriptor de sesiones de coaching con formato ICF",
   "main": "server.js",
   "type": "module",
@@ -13,6 +13,8 @@
   "dependencies": {
     "express": "^4.21.2",
     "ffmpeg-static": "^5.2.0",
-    "formidable": "^3.5.4"
+    "formidable": "^3.5.4",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9"
   }
 }
