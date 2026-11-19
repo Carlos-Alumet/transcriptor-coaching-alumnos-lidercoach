@@ -3,28 +3,24 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import formidable from "formidable";
 import fs from "fs";
-import ffmpeg from "fluent-ffmpeg";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static("public"));
+// Ampliar el tiempo límite del servidor a 10 minutos para evitar cortes con audios largos
+app.use((req, res, next) => {
+  req.setTimeout(600000);
+  res.setTimeout(600000);
+  next();
+});
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 540000 // 9 minutos de timeout para la API de OpenAI
+});
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// Función de compresión (solo se usa si el archivo supera los 25 MB y ffmpeg está disponible)
-function compressAudio(inputPath, outputPath) {
-  return new Promise((resolve, reject) => {
-    ffmpeg(inputPath)
-      .toFormat("mp3")
-      .audioChannels(1)
-      .audioBitrate("32k")
-      .on("end", () => resolve(outputPath))
-      .on("error", (err) => reject(err))
-      .save(outputPath);
-  });
-}
 
 app.post("/api/transcribe", async (req, res) => {
   const uploadDir = "/tmp";
@@ -40,7 +36,6 @@ app.post("/api/transcribe", async (req, res) => {
 
   form.parse(req, async (err, fields, files) => {
     let filePath = null;
-    let fileToProcess = null;
 
     try {
       if (err) {
@@ -60,34 +55,25 @@ app.post("/api/transcribe", async (req, res) => {
       }
 
       filePath = audioFile.filepath;
-      fileToProcess = filePath;
-
       const fileSizeMB = audioFile.size / (1024 * 1024);
-      console.log(`Tamaño del archivo recibido: ${fileSizeMB.toFixed(2)} MB`);
+      console.log(`Procesando archivo: ${fileSizeMB.toFixed(2)} MB`);
 
-      // Si pesa más de 25 MB intentamos comprimir, si falla o pesa menos, lo usamos directo
       if (fileSizeMB > 25) {
-        console.log("El archivo supera los 25 MB. Intentando comprimir...");
-        const compressedPath = `${uploadDir}/compressed_${Date.now()}.mp3`;
-        try {
-          await compressAudio(filePath, compressedPath);
-          fileToProcess = compressedPath;
-        } catch (compError) {
-          console.log("Advertencia: No se pudo comprimir (ffmpeg no disponible). Se enviará el archivo original.");
-        }
+        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ error: "El archivo supera los 25 MB permitidos por OpenAI. Por favor comprimilo un poco antes de subirlo." });
       }
 
-      // Transcribir con OpenAI Whisper
+      // 1. Transcribir con OpenAI Whisper
       console.log("Enviando a OpenAI Whisper...");
       const transcriptionResponse = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(fileToProcess),
+        file: fs.createReadStream(filePath),
         model: "whisper-1",
         response_format: "text"
       });
 
       const rawText = transcriptionResponse;
 
-      // Dar formato con Gemini siguiendo las reglas de coaching
+      // 2. Dar formato con Gemini
       console.log("Dando formato ontológico con Gemini...");
       const coachName = fields.coach ? (Array.isArray(fields.coach) ? fields.coach[0] : fields.coach) : "COACH";
       
@@ -107,7 +93,6 @@ app.post("/api/transcribe", async (req, res) => {
       const result = await model.generateContent(prompt);
       const formattedText = result.response.text();
 
-      // Limpieza de archivos temporales
       if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
       return res.status(200).json({ success: true, transcription: formattedText });
