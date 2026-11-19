@@ -5,17 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Transcriptor de sesiones de coaching · ICF</title>
 <style>
-  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e4e2dc; --accent:#1f5f8b; --coach:#1f5f8b; --cliente:#8b4a1f; --err:#b3261e; }
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1d1d1f; --muted:#6b6b70; --line:#e4e2dc; --accent:#3d2a8c; --accent-soft:#f5f3fc; --cell:#dcd7eb; --err:#b3261e; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
-  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 64px; }
+  main { max-width: 900px; margin: 0 auto; padding: 32px 20px 64px; }
   h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; color: var(--accent); }
   .sub { color: var(--muted); margin: 0 0 24px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
   label { display:block; font-weight:600; margin: 0 0 6px; }
-  input[type=text] { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .opt { font-weight: 400; color: var(--muted); }
+  input[type=text], input[type=date], textarea { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fff; }
+  textarea { resize: vertical; min-height: 70px; }
+  .grid { display:grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
   .drop { border:2px dashed var(--line); border-radius:10px; padding:22px; text-align:center; color:var(--muted); cursor:pointer; margin-top:16px; }
-  .drop.over { border-color: var(--accent); background:#eef4f8; }
+  .drop.over { border-color: var(--accent); background: var(--accent-soft); }
   .drop strong { color: var(--ink); }
   button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
   button.ghost { background:#fff; color:var(--accent); }
@@ -27,13 +32,11 @@
   .muted { color: var(--muted); font-size:.92rem; }
   .error { color: var(--err); font-weight:600; }
   .hidden { display:none !important; }
-  .toolbar { position: sticky; top: 0; background: var(--card); padding-bottom: 12px; border-bottom:1px solid var(--line); margin-bottom: 14px; z-index: 1; }
-  .turn { margin: 0 0 14px; }
-  .ts { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .9rem; margin-right: 6px; }
-  .who { font-weight: 700; }
-  .who.COACH { color: var(--coach); }
-  .who.CLIENTE { color: var(--cliente); }
-  .txt { outline: none; border-radius: 4px; }
+  .toolbar { position: sticky; top: 0; background: var(--card); padding: 4px 0 12px; border-bottom:1px solid var(--line); margin-bottom: 16px; z-index: 1; }
+  table.tr { width:100%; border-collapse: collapse; font-size: .95rem; }
+  table.tr td { border: 1px solid var(--cell); padding: 8px 10px; vertical-align: top; }
+  table.tr td.who { width: 130px; background: var(--accent-soft); color: var(--accent); font-weight: 700; white-space: nowrap; }
+  .txt { outline: none; display:block; }
   .txt:focus { background: #fffbe6; }
 </style>
 </head>
@@ -42,9 +45,20 @@
   <h1>Transcriptor de sesiones de coaching</h1>
   <p class="sub">Formato ICF: hablantes identificados, marcas de tiempo reales del audio y transcripción literal.</p>
 
+  <!-- Paso 1: datos y audio -->
   <section class="card" id="formCard">
-    <label for="coach">Nombre del coach</label>
-    <input type="text" id="coach" placeholder="Ej.: María González" autocomplete="off" />
+    <div class="grid">
+      <div>
+        <label for="coach">Nombre del coach</label>
+        <input type="text" id="coach" placeholder="Ej.: María González" autocomplete="off" />
+      </div>
+      <div>
+        <label for="fecha">Fecha de la conversación</label>
+        <input type="date" id="fecha" />
+      </div>
+    </div>
+    <label for="notas">Notas <span class="opt">(opcional)</span></label>
+    <textarea id="notas" placeholder="Ej.: Sesión de práctica para certificación, nivel ACC."></textarea>
 
     <div class="drop" id="drop">
       <strong>Elegí o arrastrá el audio de la sesión</strong><br />
@@ -59,31 +73,56 @@
     </div>
   </section>
 
+  <!-- Paso 2: progreso -->
   <section class="card hidden" id="progressCard">
     <div id="stage">Subiendo el archivo…</div>
     <div class="bar"><div id="barFill"></div></div>
     <div class="muted">Una sesión de una hora tarda unos minutos. Podés dejar esta pestaña abierta y hacer otra cosa.</div>
   </section>
 
+  <!-- Paso 3: resultado -->
   <section class="card hidden" id="resultCard">
     <div class="toolbar">
       <div class="row">
-        <button id="swap" class="ghost" title="Usalo si el coach y el cliente quedaron al revés">⇄ Intercambiar COACH / CLIENTE</button>
-        <button id="copy" class="ghost">Copiar (con formato)</button>
-        <button id="download">Descargar .txt</button>
+        <button id="pdf">Descargar PDF</button>
+        <button id="swap" class="ghost" title="Usalo si el coach y el cliente quedaron al revés">⇄ Intercambiar Coach / Cliente</button>
+        <button id="copy" class="ghost">Copiar</button>
+        <button id="download" class="ghost">Descargar .txt</button>
         <button id="again" class="ghost">Nueva transcripción</button>
       </div>
       <div id="warnings" class="error" style="margin-top:8px"></div>
-      <div class="muted" style="margin-top:8px">Podés corregir cualquier texto haciendo clic sobre él. <span id="meta"></span></div>
+      <div class="muted" style="margin-top:8px">Podés corregir cualquier texto haciendo clic sobre él antes de descargar. <span id="meta"></span></div>
     </div>
-    <div id="transcript"></div>
+
+    <h1 style="text-align:center;color:var(--accent);margin:4px 0 18px">Sesión de práctica para la certificación ICF</h1>
+    <h2>Detalles de la sesión</h2>
+    <div class="grid">
+      <div>
+        <label for="rCoach">Coach</label>
+        <input type="text" id="rCoach" />
+      </div>
+      <div>
+        <label for="rFecha">Fecha</label>
+        <input type="date" id="rFecha" />
+      </div>
+    </div>
+    <label for="rNotas">Notas <span class="opt">(opcional)</span></label>
+    <textarea id="rNotas"></textarea>
+
+    <h2 style="margin-top:22px">Transcripción</h2>
+    <table class="tr"><tbody id="transcript"></tbody></table>
   </section>
 </main>
 
+<script src="/vendor/jspdf/jspdf.umd.min.js"></script>
+<script src="/vendor/autotable/jspdf.plugin.autotable.min.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 let selectedFile = null;
 let result = null;
+const TITULO = "Sesión de práctica para la certificación ICF";
+
+$("fecha").value = new Date().toLocaleDateString("en-CA"); // hoy, formato AAAA-MM-DD
 
 // ---------- Selección de archivo ----------
 const drop = $("drop"), fileInput = $("file");
@@ -103,8 +142,11 @@ function pickFile(f) {
 // ---------- Envío y seguimiento ----------
 $("go").onclick = async () => {
   if (!selectedFile) return;
+  const header = { coach: $("coach").value.trim(), fecha: $("fecha").value, notas: $("notas").value.trim() };
+  store("header", JSON.stringify(header));
+
   const fd = new FormData();
-  fd.append("coach", $("coach").value.trim());
+  fd.append("coach", header.coach);
   fd.append("audio", selectedFile);
   show("progress");
   setProgress(0, "Subiendo el archivo…");
@@ -123,7 +165,10 @@ function upload(fd) {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/jobs");
     xhr.upload.onprogress = e => {
-      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100), `Subiendo el archivo… ${Math.round((e.loaded / e.total) * 100)}%`);
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        setProgress(pct, `Subiendo el archivo… ${pct}%`);
+      }
     };
     xhr.onload = () => {
       let data = {};
@@ -141,7 +186,7 @@ async function poll(jobId) {
     try {
       const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
       const job = await res.json();
-      if (res.status === 404) return fail("El servidor se reinició y se perdió el trabajo. Volvé a subir el audio.");
+      if (res.status === 404) { store("jobId", null); return fail("El servidor se reinició y se perdió el trabajo. Volvé a subir el audio."); }
       failures = 0;
       if (job.status === "done") { store("jobId", null); return showResult(job.result); }
       if (job.status === "error") { store("jobId", null); return fail(job.error); }
@@ -172,35 +217,37 @@ function show(which) {
 // ---------- Resultado ----------
 function showResult(r) {
   result = r;
+  let header = {};
+  try { header = JSON.parse(localStorage.getItem("header") || "{}"); } catch {}
+  $("rCoach").value = header.coach || r.coachName || "";
+  $("rFecha").value = header.fecha || new Date().toLocaleDateString("en-CA");
+  $("rNotas").value = header.notas || "";
   show("result");
   render();
 }
 
-function label(speaker) {
-  const role = result.roles[speaker] || "OTRO";
-  if (role === "COACH") return { role, name: "COACH", extra: result.coachName ? ` (${result.coachName})` : "" };
-  if (role === "CLIENTE") return { role, name: "CLIENTE", extra: "" };
-  return { role, name: "OTRO HABLANTE", extra: "" };
-}
+const roleLabel = (speaker) => ({ COACH: "Coach", CLIENTE: "Cliente" }[result.roles[speaker]] || "Otro");
 
 function render() {
-  $("meta").textContent = `Duración: ${fmt(result.duration)} · ${result.turns.length} intervenciones.`;
   $("warnings").innerHTML = (result.warnings || []).map(w => "⚠️ " + esc(w)).join("<br>");
-  const box = $("transcript");
-  box.innerHTML = "";
+  $("meta").textContent = `Duración: ${ts(result.duration)} · ${result.turns.length} intervenciones.`;
+  const body = $("transcript");
+  body.innerHTML = "";
   result.turns.forEach((t, i) => {
-    const l = label(t.speaker);
-    const p = document.createElement("p");
-    p.className = "turn";
-    p.innerHTML = `<span class="ts">[${fmt(t.start)}]</span><span class="who ${l.role}">${l.name}</span>${esc(l.extra)}: `;
+    const tr = document.createElement("tr");
+    const who = document.createElement("td");
+    who.className = "who";
+    who.textContent = `${roleLabel(t.speaker)} ${ts(t.start)}`;
+    const td = document.createElement("td");
     const span = document.createElement("span");
     span.className = "txt";
     span.contentEditable = "true";
     span.spellcheck = false;
     span.textContent = t.text;
     span.oninput = () => { result.turns[i].text = span.textContent; };
-    p.appendChild(span);
-    box.appendChild(p);
+    td.appendChild(span);
+    tr.append(who, td);
+    body.appendChild(tr);
   });
 }
 
@@ -212,40 +259,106 @@ $("swap").onclick = () => {
   render();
 };
 
-function header() {
-  return `Sesión de coaching${result.coachName ? ` · Coach: ${result.coachName}` : ""} · Duración: ${fmt(result.duration)}`;
+function headerData() {
+  return {
+    coach: $("rCoach").value.trim(),
+    fecha: fechaLarga($("rFecha").value),
+    notas: $("rNotas").value.trim(),
+  };
 }
 
-function asText() {
-  const lines = result.turns.map(t => { const l = label(t.speaker); return `[${fmt(t.start)}] ${l.name}${l.extra}: ${t.text}`; });
-  return header() + "\n\n" + lines.join("\n\n") + "\n";
+function rows() {
+  return result.turns.map(t => [`${roleLabel(t.speaker)} ${ts(t.start)}`, t.text.trim()]);
 }
 
-function asHtml() {
-  const lines = result.turns.map(t => {
-    const l = label(t.speaker);
-    return `<p>[${fmt(t.start)}] <b>${l.name}</b>${esc(l.extra)}: ${esc(t.text)}</p>`;
+function fileBase() {
+  const h = headerData();
+  const parts = ["transcripcion", h.coach, $("rFecha").value].filter(Boolean);
+  return parts.join("-").replace(/[^\p{L}\p{N}-]+/gu, "_");
+}
+
+// ---------- PDF ----------
+$("pdf").onclick = () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const M = 48;
+  const violet = [61, 42, 140];
+  const h = headerData();
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(...violet);
+  doc.text(TITULO, W / 2, 64, { align: "center" });
+
+  let y = 104;
+  doc.setFontSize(14);
+  doc.text("Detalles de la sesión", M, y);
+  y += 20;
+
+  doc.setFontSize(10);
+  doc.setTextColor(20, 20, 20);
+  const field = (name, value) => {
+    if (!value) return;
+    doc.setFont("helvetica", "bold");
+    doc.text(`${name}:`, M, y);
+    const off = doc.getTextWidth(`${name}: `);
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(value, W - 2 * M - off);
+    doc.text(lines, M + off, y);
+    y += lines.length * 13;
+  };
+  field("Coach", h.coach);
+  field("Fecha", h.fecha);
+  field("Notas", h.notas);
+
+  y += 16;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...violet);
+  doc.text("Transcripción", M, y);
+
+  window.autoTable(doc, {
+    startY: y + 10,
+    body: rows(),
+    theme: "grid",
+    margin: { left: M, right: M, top: 48, bottom: 48 },
+    styles: { font: "helvetica", fontSize: 9.5, cellPadding: 7, textColor: [20, 20, 20], lineColor: [220, 215, 235], lineWidth: 0.6, valign: "top", overflow: "linebreak" },
+    columnStyles: { 0: { cellWidth: 92, fontStyle: "bold", textColor: violet, fillColor: [245, 243, 252] } },
+    rowPageBreak: "avoid",
+    didDrawPage: () => {
+      const H = doc.internal.pageSize.getHeight();
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(140, 140, 140);
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, W - M, H - 24, { align: "right" });
+    },
   });
-  return `<p><i>${esc(header())}</i></p>` + lines.join("");
+
+  doc.save(`${fileBase()}.pdf`);
+};
+
+// ---------- Texto ----------
+function asText() {
+  const h = headerData();
+  const head = [TITULO.toUpperCase(), ""];
+  if (h.coach) head.push(`Coach: ${h.coach}`);
+  if (h.fecha) head.push(`Fecha: ${h.fecha}`);
+  if (h.notas) head.push(`Notas: ${h.notas}`);
+  const body = rows().map(([who, text]) => `${who}\t${text}`).join("\n\n");
+  return head.join("\n") + "\n\n" + body + "\n";
 }
 
 $("copy").onclick = async () => {
-  try {
-    await navigator.clipboard.write([new ClipboardItem({
-      "text/html": new Blob([asHtml()], { type: "text/html" }),
-      "text/plain": new Blob([asText()], { type: "text/plain" }),
-    })]);
-  } catch {
-    await navigator.clipboard.writeText(asText());
-  }
-  flash($("copy"), "¡Copiado!");
+  try { await navigator.clipboard.writeText(asText()); flash($("copy"), "¡Copiado!"); }
+  catch { flash($("copy"), "No se pudo copiar"); }
 };
 
 $("download").onclick = () => {
   const blob = new Blob(["﻿" + asText()], { type: "text/plain;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `transcripcion${result.coachName ? "-" + result.coachName.replace(/\s+/g, "_") : ""}.txt`;
+  a.download = `${fileBase()}.txt`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -258,10 +371,18 @@ $("again").onclick = () => {
 };
 
 // ---------- Utilidades ----------
-function fmt(sec) {
+// 00:00 hasta la hora; 1:02:03 si pasa de una hora.
+function ts(sec) {
   sec = Math.max(0, Math.floor(sec || 0));
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
-  return [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
+  const mmss = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return h ? `${h}:${mmss}` : mmss;
+}
+function fechaLarga(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  return `${d} de ${meses[m - 1]} de ${y}`;
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 function flash(btn, txt) { const o = btn.textContent; btn.textContent = txt; setTimeout(() => btn.textContent = o, 1500); }
